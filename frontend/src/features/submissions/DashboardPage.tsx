@@ -10,6 +10,7 @@ import {
   applyCanonPr,
   calibrateCanonRule,
   compileBrandCanon,
+  getApiBase,
   type Submission,
   type CanonSummary,
   type CanonRuleItem,
@@ -240,7 +241,15 @@ export function DashboardPage() {
   }, [syncRuleSliders]);
 
   useEffect(() => {
-    refresh();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) {
+        refresh();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [refresh]);
 
   const loadGovernanceTelemetry = useCallback(async (canonId: string) => {
@@ -263,7 +272,15 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (activeTab === "governance" && govCanonId) {
-      loadGovernanceTelemetry(govCanonId);
+      let active = true;
+      void Promise.resolve().then(() => {
+        if (active) {
+          loadGovernanceTelemetry(govCanonId);
+        }
+      });
+      return () => {
+        active = false;
+      };
     }
   }, [activeTab, govCanonId, loadGovernanceTelemetry]);
 
@@ -464,7 +481,8 @@ export function DashboardPage() {
         uploadedAttachments,
       );
       // Automatically run pre-flight scan before opening Review Studio
-      await fetch(`/api/submissions/${sub.id}/scan?alpha=0.1`, {
+      const apiBase = getApiBase();
+      await fetch(`${apiBase}/submissions/${sub.id}/scan?alpha=0.1`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("cg_token") ?? ""}`,
